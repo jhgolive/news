@@ -2,82 +2,100 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>어두운 색상 팔레트 10개씩</title>
+<title>뉴스</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    padding: 20px;
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
   }
-  h1 { text-align: center; }
-  h2 { margin-top: 40px; }
-  .group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 40px;
+  #wrapper {
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+    width: 100vw;
+    height: 40px; /* 자막 높이 */
   }
-  .color-box {
-    width: 150px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
+  #news {
+    display: inline-block;
+    font-size: 28px;
+    color: white;
     font-weight: bold;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    text-align: center;
-    font-size: 14px;
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black, 
+                 -1px -1px black, -1px 1px black, 1px -1px black, 1px 1px black;
+    will-change: transform;
+    backface-visibility: hidden;
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
   }
-  .color-box.light-text { color: #000; }
 </style>
 </head>
 <body>
-
-<h1>어두운 색상 팔레트 (10개씩)</h1>
-
-<h2>🔴 빨강 계열</h2>
-<div class="group">
-  <div class="color-box" style="background:#FF0000">#FF0000</div>
-  <div class="color-box" style="background:#DC143C">#DC143C</div>
-  <div class="color-box" style="background:#B22222">#B22222</div>
-  <div class="color-box" style="background:#8B0000">#8B0000</div>
-  <div class="color-box" style="background:#800000">#800000</div>
-  <div class="color-box" style="background:#A52A2A">#A52A2A</div>
-  <div class="color-box" style="background:#7C0A02">#7C0A02</div>
-  <div class="color-box" style="background:#600000">#600000</div>
-  <div class="color-box" style="background:#5C0000">#5C0000</div>
-  <div class="color-box" style="background:#3B0000">#3B0000</div>
+<div id="wrapper">
+  <div id="news">뉴스 로딩 중...</div>
 </div>
 
-<h2>🟡 노랑 계열</h2>
-<div class="group">
-  <div class="color-box light-text" style="background:#FFFF00">#FFFF00</div>
-  <div class="color-box light-text" style="background:#FFD700">#FFD700</div>
-  <div class="color-box" style="background:#FFA500">#FFA500</div>
-  <div class="color-box" style="background:#FF8C00">#FF8C00</div>
-  <div class="color-box" style="background:#B8860B">#B8860B</div>
-  <div class="color-box" style="background:#DAA520">#DAA520</div>
-  <div class="color-box" style="background:#9B870C">#9B870C</div>
-  <div class="color-box" style="background:#8B8000">#8B8000</div>
-  <div class="color-box" style="background:#7F6A00">#7F6A00</div>
-  <div class="color-box" style="background:#665D1E">#665D1E</div>
-</div>
+<script>
+const newsEl = document.getElementById("news");
+const wrapperEl = document.getElementById("wrapper");
+const API_URL = "https://news-production-b9d6.up.railway.app/news";
 
-<h2>🔵 하늘 계열</h2>
-<div class="group">
-  <div class="color-box" style="background:#87CEEB; color:#000">#87CEEB</div>
-  <div class="color-box" style="background:#7ABCE0">#7ABCE0</div>
-  <div class="color-box" style="background:#6EB1D5">#6EB1D5</div>
-  <div class="color-box" style="background:#6296CA">#6296CA</div>
-  <div class="color-box" style="background:#578BC0">#578BC0</div>
-  <div class="color-box" style="background:#4B81B5">#4B81B5</div>
-  <div class="color-box" style="background:#4076AA">#4076AA</div>
-  <div class="color-box" style="background:#366BA0">#366BA0</div>
-  <div class="color-box" style="background:#2C6095">#2C6095</div>
-  <div class="color-box" style="background:#235686">#235686</div>
-</div>
+let newsText = "뉴스 로딩 중...";
+let pendingNews = null; // 대기 중인 새 뉴스
+let animFrame;
 
+// 뉴스 가져오기
+async function loadNews() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    if (data.news && data.news !== newsText) {
+      // 바로 적용하지 않고 대기
+      pendingNews = data.news;
+    }
+  } catch (err) {
+    console.error("뉴스 불러오기 실패", err);
+  }
+}
+
+// 글자 스크롤
+function startScroll() {
+  cancelAnimationFrame(animFrame);
+  newsEl.style.transform = `translateX(${wrapperEl.offsetWidth}px)`;
+  let startTime = null;
+
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const speed = 100; // px/sec
+    const x = wrapperEl.offsetWidth - (elapsed / 1000) * speed;
+
+    newsEl.style.transform = `translateX(${x}px)`;
+
+    if (x + newsEl.offsetWidth > 0) {
+      animFrame = requestAnimationFrame(step);
+    } else {
+      // 끝까지 간 뒤 새 뉴스 있으면 교체
+      if (pendingNews) {
+        newsText = pendingNews;
+        newsEl.innerText = newsText;
+        pendingNews = null;
+      }
+      startScroll();
+    }
+  }
+
+  animFrame = requestAnimationFrame(step);
+}
+
+// 초기 실행
+newsEl.innerText = newsText;
+startScroll();
+loadNews();
+
+// 10분마다 뉴스 갱신
+setInterval(loadNews, 600000);
+</script>
 </body>
 </html>
