@@ -9,13 +9,15 @@
     background: transparent;
     overflow: hidden;
   }
+
   #wrapper {
     white-space: nowrap;
     overflow: hidden;
     position: relative;
     width: 100vw;
-    height: 40px; /* 자막 높이 */
+    height: 40px;
   }
+
   #news {
     display: inline-block;
     font-size: 28px;
@@ -28,6 +30,14 @@
     position: absolute;
     top: 0;
     white-space: nowrap;
+    animation-name: scroll;
+    animation-timing-function: linear;
+    animation-iteration-count: 1; /* 한 번만 실행 */
+  }
+
+  @keyframes scroll {
+    from { transform: translateX(100%); }
+    to { transform: translateX(-100%); }
   }
 </style>
 </head>
@@ -38,64 +48,54 @@
 
 <script>
 const newsEl = document.getElementById("news");
-const wrapperEl = document.getElementById("wrapper");
 const API_URL = "https://proxy-production-b9d6.up.railway.app/news";
 
-let newsText = "뉴스 로딩 중...";
-let pendingNews = null; // 대기 중인 새 뉴스
-let animFrame;
+let pendingNews = null;
 
 // 뉴스 가져오기
 async function loadNews() {
   try {
     const res = await fetch(API_URL);
     const data = await res.json();
-    if (data.news && data.news !== newsText) {
-      // 바로 적용하지 않고 대기
+    if (data.news) {
       pendingNews = data.news;
+      startScroll(pendingNews);
     }
   } catch (err) {
     console.error("뉴스 불러오기 실패", err);
   }
 }
 
-// 글자 스크롤
-function startScroll() {
-  cancelAnimationFrame(animFrame);
-  newsEl.style.transform = `translateX(${wrapperEl.offsetWidth}px)`;
-  let startTime = null;
+// CSS 애니메이션으로 스크롤
+function startScroll(text) {
+  newsEl.textContent = text;
 
-  function step(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-    const speed = 100; // px/sec
-    const x = wrapperEl.offsetWidth - (elapsed / 1000) * speed;
+  // 텍스트 길이에 따라 애니메이션 시간 조절 (px/sec = 100)
+  const wrapperWidth = newsEl.parentElement.offsetWidth;
+  const textWidth = newsEl.offsetWidth;
+  const speed = 100; // px/sec
+  const duration = (wrapperWidth + textWidth) / speed;
 
-    newsEl.style.transform = `translateX(${x}px)`;
+  newsEl.style.animationDuration = `${duration}s`;
 
-    if (x + newsEl.offsetWidth > 0) {
-      animFrame = requestAnimationFrame(step);
-    } else {
-      // 끝까지 간 뒤 새 뉴스 있으면 교체
-      if (pendingNews) {
-        newsText = pendingNews;
-        newsEl.innerText = newsText;
-        pendingNews = null;
-      }
-      // 한 바퀴 끝났을 때 서버에서 새 뉴스 요청
-      loadNews();
-      startScroll();
+  // 애니메이션 끝나면 새 뉴스 있으면 다시 실행
+  newsEl.addEventListener("animationend", function handler() {
+    newsEl.removeEventListener("animationend", handler);
+    if (pendingNews) {
+      startScroll(pendingNews);
+      pendingNews = null;
     }
-  }
+    loadNews(); // 한 바퀴 끝날 때 서버 갱신
+  });
 
-  animFrame = requestAnimationFrame(step);
+  // 강제로 애니메이션 재시작
+  newsEl.style.animation = "none";
+  newsEl.offsetHeight; // 리플로우
+  newsEl.style.animation = `scroll linear ${duration}s 1`;
 }
 
 // 초기 실행
-newsEl.innerText = newsText;
-startScroll();
 loadNews();
-
 </script>
 </body>
 </html>
