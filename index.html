@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>뉴스</title>
+<style>
+  body {
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  #wrapper {
+    white-space: nowrap;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateY(-8px);
+    width: 100vw;
+    height: 40px;
+    z-index: 9999;
+  }
+
+  #news {
+    display: inline-block;
+    font-size: 28px;
+    color: white;
+    font-weight: bold;
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black,
+                 -1px -1px black, -1px 1px black, 1px -1px black, 1px 1px black;
+    will-change: transform;
+    backface-visibility: hidden;
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+    animation-name: scroll;
+    animation-timing-function: linear;
+    animation-iteration-count: 1;
+  }
+
+  @keyframes scroll {
+    from { transform: translateX(100vw); }
+    to { transform: translateX(-100%); }
+  }
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <div id="news">뉴스 로딩 중...</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+// ✅ Firebase 설정 (컨트롤 페이지와 동일해야 함)
+const firebaseConfig = {
+  apiKey: "AIzaSyAQGtOEcxFxl9FV7NASLgxLDc23u2vzS_0",
+  authDomain: "mygps-11798.firebaseapp.com",
+  databaseURL: "https://mygps-11798-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mygps-11798",
+  storageBucket: "mygps-11798.firebasedestorage.app",
+  messagingSenderId: "271371741627",
+  appId: "1:271371741627:web:642901f43c5ad57d80bc9e"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const newsEl = document.getElementById("news");
+const API_URL = "https://newstts-production-b5a7.up.railway.app/news";
+
+let isPaused = false;
+
+// ✅ Firebase ttsControl.playing 실시간 감지
+const controlRef = ref(db, "ttsControl");
+onValue(controlRef, (snapshot) => {
+  const data = snapshot.val();
+  if (!data) return;
+  if (data.playing === false) pauseScroll();
+  else if (data.playing === true) resumeScroll();
+});
+
+// ✅ 뉴스 불러오기
+async function loadNews() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    if (data.news) startScroll(data.news);
+  } catch (err) {
+    console.error("뉴스 로딩 실패", err);
+  }
+}
+
+// ✅ 뉴스 스크롤 시작
+function startScroll(text) {
+  newsEl.textContent = text;
+
+  const wrapperWidth = newsEl.parentElement.offsetWidth;
+  const textWidth = newsEl.offsetWidth;
+  const speed = 100; // px/sec
+  const duration = (wrapperWidth + textWidth) / speed;
+
+  newsEl.style.animation = `scroll linear ${duration}s 1`;
+  newsEl.style.animationPlayState = "running";
+  isPaused = false;
+
+  newsEl.addEventListener("animationend", function handler() {
+    newsEl.removeEventListener("animationend", handler);
+    loadNews(); // 다음 뉴스 자동 로드
+  });
+}
+
+// ✅ 일시정지 / 재개
+function pauseScroll() {
+  if (!isPaused) {
+    newsEl.style.animationPlayState = "paused";
+    isPaused = true;
+  }
+}
+
+function resumeScroll() {
+  if (isPaused) {
+    newsEl.style.animationPlayState = "running";
+    isPaused = false;
+  }
+}
+
+// ✅ 페이지 처음 실행 시 뉴스 시작
+loadNews();
+</script>
+</body>
+</html>
