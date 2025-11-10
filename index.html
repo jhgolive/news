@@ -90,13 +90,10 @@ onValue(controlRef, (snapshot) => {
   if (data.hiddenText === true) {
     //newsEl.style.visibility = "hidden"; // 안 보이게
     //newsEl.style.opacity = "0";
-    if (data.playing === false) { pauseScroll(); } // 스크롤 정지
-    else {}
+    if (data.playing === true) { pauseScroll(); } // 스크롤 정지
   } else {
     //newsEl.style.visibility = "visible"; // 다시 보이게
     //newsEl.style.opacity = "1";
-    if (data.playing === true) { resumeScroll(); } // 스크롤 재개
-    else {}
   }
 });
 
