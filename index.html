@@ -48,7 +48,7 @@
 </head>
 <body>
 <div id="wrapper">
-  <div id="news">뉴스 로딩 중...</div>
+  2<div id="news">뉴스 로딩 중...</div>
 </div>
 
 <script type="module">
@@ -91,10 +91,12 @@ onValue(controlRef, (snapshot) => {
     //newsEl.style.visibility = "hidden"; // 안 보이게
     //newsEl.style.opacity = "0";
     if (data.playing === true) { pauseScroll(); } // 스크롤 정지
+    else {}
   } else {
     //newsEl.style.visibility = "visible"; // 다시 보이게
     //newsEl.style.opacity = "1";
     if (data.playing === false) { resumeScroll(); } // 스크롤 재개
+    else {}
   }
 });
 
