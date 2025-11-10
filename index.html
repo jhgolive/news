@@ -79,11 +79,20 @@ const controlRef = ref(db, "ttsControl");
 onValue(controlRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
+  // ▶ 재생/일시정지
   if (data.playing === false) pauseScroll();
   else if (data.playing === true) resumeScroll();
-  // 글자 크기 실시간 반영
+  // 글자 크기 반영
   if (data.fontSize) {
     newsEl.style.fontSize = data.fontSize + "px";
+  }
+  // ✅ 글자 숨김 제어 (텍스트 숨기고 스크롤 정지)
+  if (data.hiddenText === true) {
+    newsEl.style.visibility = "hidden"; // 안 보이게
+    pauseScroll(); // 스크롤 정지
+  } else {
+    newsEl.style.visibility = "visible"; // 다시 보이게
+    resumeScroll(); // 스크롤 재개
   }
 });
 
