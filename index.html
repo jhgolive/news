@@ -80,8 +80,8 @@ onValue(controlRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
   // ▶ 재생/일시정지
-  if (data.playing === false) pauseScroll();
-  else if (data.playing === true) resumeScroll();
+  if (data.playing === false) { pauseScroll(); }
+  else if (data.playing === true) { resumeScroll(); }
   // 글자 크기 반영
   if (data.fontSize) {
     newsEl.style.fontSize = data.fontSize + "px";
