@@ -48,7 +48,7 @@
 </head>
 <body>
 <div id="wrapper">
-  5<div id="news">뉴스 로딩 중...</div>
+  <div id="news">뉴스 로딩 중...</div>
 </div>
 
 <script type="module">
@@ -81,12 +81,10 @@ onValue(controlRef, (snapshot) => {
   if (!data) return;
   // ▶ 재생/일시정지
   if (data.playing === false) { 
-    //pauseScroll();
-    if (!isPaused) { pauseScroll(); }
+    pauseScroll();
   }
   else if (data.playing === true) { 
-    //resumeScroll(); 
-    if (isPaused) { resumeScroll(); }
+    resumeScroll(); 
   }
   // 글자 크기 반영
   if (data.fontSize) {
@@ -94,13 +92,9 @@ onValue(controlRef, (snapshot) => {
   }
   // ✅ 글자 숨김 제어 (텍스트 숨기고 스크롤 정지)
   if (data.hiddenText === true) {
-    //newsEl.style.visibility = "hidden"; // 안 보이게
-    //newsEl.style.opacity = "0";
-    if (!isPaused) { pauseScroll(); } // 스크롤 정지
+    newsEl.style.visibility = "hidden"; // 안 보이게
   } else {
-    //newsEl.style.visibility = "visible"; // 다시 보이게
-    //newsEl.style.opacity = "1";
-    if (isPaused) { resumeScroll(); }
+    newsEl.style.visibility = "visible"; // 다시 보이게
   }
 });
 
