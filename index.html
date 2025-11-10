@@ -73,6 +73,7 @@ const newsEl = document.getElementById("news");
 const API_URL = "https://newstts-production-0424.up.railway.app/news";
 
 let isPaused = false;
+let isHidden = false;
 
 // ✅ Firebase ttsControl.playing 실시간 감지
 const controlRef = ref(db, "ttsControl");
@@ -80,21 +81,33 @@ onValue(controlRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
   // ▶ 재생/일시정지
-  if (data.playing === false) { 
-    pauseScroll();
-  }
-  else if (data.playing === true) { 
-    resumeScroll(); 
-  }
+  if (data.playing === false) pauseScroll();
+  else if (data.playing === true) resumeScroll(); 
   // 글자 크기 반영
   if (data.fontSize) {
     newsEl.style.fontSize = data.fontSize + "px";
   }
   // ✅ 글자 숨김 제어 (텍스트 숨기고 스크롤 정지)
-  if (data.hiddenText === true) {
-    newsEl.style.visibility = "hidden"; // 안 보이게
-  } else {
-    newsEl.style.visibility = "visible"; // 다시 보이게
+  //if (data.hiddenText === true) {
+    //newsEl.style.visibility = "hidden"; // 안 보이게
+  //} else {
+    //newsEl.style.visibility = "visible"; // 다시 보이게
+  //}
+  // 👁 숨김 제어 (애니메이션 상태 보존)
+  if (data.hiddenText === true && !isHidden) {
+    isHidden = true;
+    // 현재 상태 저장
+    const currentState = getComputedStyle(newsEl).animationPlayState;
+    newsEl.dataset.prevState = currentState;
+    // 애니메이션 멈춤 + 숨김
+    newsEl.style.animationPlayState = "paused";
+    newsEl.style.visibility = "hidden";
+  } else if (data.hiddenText === false && isHidden) {
+    isHidden = false;
+    // 다시 표시하고 이전 상태 복원
+    newsEl.style.visibility = "visible";
+    const prev = newsEl.dataset.prevState || "running";
+    newsEl.style.animationPlayState = prev;
   }
 });
 
