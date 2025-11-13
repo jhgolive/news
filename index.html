@@ -1,4 +1,4 @@
-<!-- cpu 메모리 최적화 GPU사용 CSS 방식 스크롤 적용 / 글자크기 재생/일시정지 숨김 추가 -->
+<!-- cpu 메모리 최적화 GPU사용 CSS 방식 스크롤 적용 / 글자크기 재생/일시정지 숨김 추가 / 다음 뉴스 자동 스크롤 수정 -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -129,14 +129,22 @@ function startScroll(text) {
   const speed = 100; // px/sec
   const duration = (wrapperWidth + textWidth) / speed;
 
+  // 🔹 애니메이션 리셋 (재시작 보장)
+  newsEl.style.animation = "none";
+  newsEl.offsetHeight; // ← 리플로우 강제 (중요!)
   newsEl.style.animation = `scroll linear ${duration}s 1`;
   newsEl.style.animationPlayState = "running";
   isPaused = false;
 
-  newsEl.addEventListener("animationend", function handler() {
-    newsEl.removeEventListener("animationend", handler);
-    loadNews(); // 다음 뉴스 자동 로드
-  });
+  newsEl.onanimationend = async () => {
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      if (data.news) startScroll(data.news); // 다음 뉴스 반복
+    } catch (err) {
+      console.error("다음 뉴스 로딩 실패", err);
+    }
+  };
 }
 
 // ✅ 일시정지 / 재개
